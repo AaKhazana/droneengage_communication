@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <fstream>
-#include <memory> 
+#include <memory>
 #include "./helpers/colors.hpp"
 #include "./helpers/helpers.hpp"
 
@@ -12,14 +12,12 @@
 
 using namespace de;
 
-
-const Json_de& CConfigFile::GetConfigJSON()
+const Json_de &CConfigFile::GetConfigJSON()
 {
-    return  m_ConfigJSON;
+    return m_ConfigJSON;
 }
 
-
-void CConfigFile::InitConfigFile (const std::string& fileURL)
+void CConfigFile::InitConfigFile(const std::string &fileURL)
 {
     m_fileURL = fileURL;
     Refresh();
@@ -27,30 +25,30 @@ void CConfigFile::InitConfigFile (const std::string& fileURL)
 
 void CConfigFile::Refresh()
 {
-    CConfigFile::ReadFile (m_fileURL.c_str());
-    
-    CConfigFile::ParseData (m_fileContents.str());
-} 
+    CConfigFile::ReadFile(m_fileURL.c_str());
 
-void CConfigFile::ReadFile (const char * fileURL)
+    CConfigFile::ParseData(m_fileContents.str());
+}
+
+void CConfigFile::ReadFile(const char *fileURL)
 {
     std::ifstream stream;
-    std::cout << _LOG_CONSOLE_TEXT << "Read config file: " << _SUCCESS_CONSOLE_TEXT_ << fileURL << _NORMAL_CONSOLE_TEXT_ << " ...." ;
+    std::cout << _LOG_CONSOLE_TEXT << "Read config file: " << _SUCCESS_CONSOLE_TEXT_ << fileURL << _NORMAL_CONSOLE_TEXT_ << " ....";
 
-    stream.open (fileURL , std::ifstream::in);
-    if (!stream) {
+    stream.open(fileURL, std::ifstream::in);
+    if (!stream)
+    {
         std::cout << _ERROR_CONSOLE_TEXT_ << " FAILED " << _NORMAL_CONSOLE_TEXT_ << std::endl;
         exit(1); // terminate with error
     }
-    
-    std::cout << _SUCCESS_CONSOLE_TEXT_ << " succeeded "  << _NORMAL_CONSOLE_TEXT_ << std::endl;
 
-    m_fileContents <<  stream.rdbuf();
-    return ;
+    std::cout << _SUCCESS_CONSOLE_TEXT_ << " succeeded " << _NORMAL_CONSOLE_TEXT_ << std::endl;
+
+    m_fileContents << stream.rdbuf();
+    return;
 }
 
-
-void CConfigFile::ParseData (std::string jsonString)
+void CConfigFile::ParseData(std::string jsonString)
 {
     m_ConfigJSON = Json_de::parse(removeComments(jsonString));
 }

@@ -1,5 +1,5 @@
-#ifndef     GLOBAL_H_
-#define     GLOBAL_H_
+#ifndef GLOBAL_H_
+#define GLOBAL_H_
 
 #if !defined(UNUSED)
 #define UNUSED(x) (void)(x) // Variables and parameters that are not used
@@ -9,8 +9,7 @@
 
 #endif
 
-
-#if defined (DEBUG)
+#if defined(DEBUG)
 
 //  #define DDEBUG
 //  #define DDEBUG_PARSER

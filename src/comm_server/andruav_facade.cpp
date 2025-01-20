@@ -9,7 +9,7 @@
 
 #include "../helpers/colors.hpp"
 #include "../helpers/helpers.hpp"
-#include "../helpers/util_rpi.hpp"
+// #include "../helpers/util_rpi.hpp"
 
 #include "../version.h"
 #include "../messages.hpp"

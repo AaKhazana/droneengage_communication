@@ -12,7 +12,7 @@
 
 #include "../helpers/colors.hpp"
 #include "../helpers/helpers.hpp"
-#include "../helpers/util_rpi.hpp"
+// #include "../helpers/util_rpi.hpp"
 #include "../messages.hpp"
 #include "../configFile.hpp"
 #include "andruav_auth.hpp"
@@ -193,10 +193,10 @@ void de::andruav_servers::CAndruavCommServer::connect()
         }
 
         std::string serial;
-        if (helpers::CUtil_Rpi::getInstance().get_cpu_serial(serial) != false)
-        {
-            std::cout << "Unique Key :" << serial << std::endl;
-        }
+        // if (helpers::CUtil_Rpi::getInstance().get_cpu_serial(serial) != false)
+        // {
+            // std::cout << "Unique Key :" << serial << std::endl;
+        // }
         serial.append(get_linux_machine_id());
 
         de::ANDRUAV_UNIT_INFO &unit_info = de::CAndruavUnitMe::getInstance().getUnitInfo();
