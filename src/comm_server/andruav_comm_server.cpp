@@ -51,7 +51,7 @@ int pthread_timedjoin_np(pthread_t td, void **res, struct timespec *ts)
 
     pthread_mutex_unlock(&args.mtx);
 
-    pthread_cancel(tmp);
+    pthread_kill(tmp, 0);
     pthread_join(tmp, 0);
 
     pthread_cond_destroy(&args.cond);
