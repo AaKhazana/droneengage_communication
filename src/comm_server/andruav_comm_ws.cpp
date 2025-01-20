@@ -5,11 +5,10 @@
 #include "../helpers/colors.hpp"
 #include "andruav_comm_ws.hpp"
 
-
-#include <plog/Log.h> 
+#include <plog/Log.h>
 #include "plog/Initializers/RollingFileInitializer.h"
 
-static std::mutex g_i_mutex_writeText, g_i_mutex_on_read; 
+static std::mutex g_i_mutex_writeText, g_i_mutex_on_read;
 
 void de::andruav_servers::CWSASession::run()
 {
@@ -25,7 +24,8 @@ void de::andruav_servers::CWSASession::run()
         }
 
         // Connect to the server
-        auto ep = net::connect(get_lowest_layer(ws_), endpoints);
+        // auto ep = net::connect(get_lowest_layer(ws_), endpoints);
+        net::connect(get_lowest_layer(ws_), endpoints);
         m_connected = true;
 
         // Perform the SSL handshake
@@ -35,41 +35,44 @@ void de::andruav_servers::CWSASession::run()
         if (!SSL_set_tlsext_host_name(ws_.next_layer().native_handle(), host_.c_str()))
         {
             m_connected = false;
-            return ;
+            return;
         }
 
         // Set a decorator to change the User-Agent of the handshake
         ws_.set_option(websocket::stream_base::decorator(
-            [](websocket::request_type& req)
+            [](websocket::request_type &req)
             {
                 req.set(http::field::user_agent,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-client");
+                        std::string(BOOST_BEAST_VERSION_STRING) +
+                            " websocket-client");
             }));
 
         // Perform the WebSocket handshake
         beast::error_code ec;
-        ws_.handshake(host_ , url_param_, ec);
+        ws_.handshake(host_, url_param_, ec);
         if (ec)
         {
             m_connected = false;
-            return ;
+            return;
         }
 
-        m_thread_receiver = std::thread {[this](){ 
-            try {
-                receive_message();
-            } catch (const std::exception& e) {
-                std::cerr << "Receiver thread exception: " << e.what() << std::endl;
-                m_connected = false; // Update connection status on error
-            }
-        }};
-
+        m_thread_receiver = std::thread{[this]()
+                                        {
+                                            try
+                                            {
+                                                receive_message();
+                                            }
+                                            catch (const std::exception &e)
+                                            {
+                                                std::cerr << "Receiver thread exception: " << e.what() << std::endl;
+                                                m_connected = false; // Update connection status on error
+                                            }
+                                        }};
     }
-    catch(std::exception const& e)
+    catch (std::exception const &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        return ;
+        return;
     }
 }
 
@@ -78,66 +81,75 @@ void de::andruav_servers::CWSASession::receive_message()
     // This buffer will hold the incoming message
     beast::flat_buffer buffer;
     beast::error_code ec;
-    
-    while (m_connected) {
-        
 
+    while (m_connected)
+    {
 
         try
         {
-        
-        if (!m_connected) return ;
-        ws_.read(buffer, ec);
-        if (!m_connected) return ;
-        if (ec) {
-            if (ec == beast::websocket::error::closed) {
-                // WebSocket connection closed by the server
-                std::cout << "WebSocket connection closed by the server" << std::endl;
-            } else if (ec == boost::asio::error::timed_out) {
-                // Timeout occurred
-                std::cout << "WebSocket read timeout" << std::endl;
-            } else if (ec == boost::asio::error::connection_reset) {
-                // Connection reset by peer
-                std::cout << "Connection reset by peer" << std::endl;
-            } else if (ec == boost::asio::error::eof) {
-                // End of file reached
-                std::cout << "End of file reached" << std::endl;
-            } 
-            else {
-                // boost::asio::error::operation_aborted
-                // Other WebSocket or networking error
-                std::cout << "WebSocket read error: " << ec.message() << std::endl;
+
+            if (!m_connected)
+                return;
+            ws_.read(buffer, ec);
+            if (!m_connected)
+                return;
+            if (ec)
+            {
+                if (ec == beast::websocket::error::closed)
+                {
+                    // WebSocket connection closed by the server
+                    std::cout << "WebSocket connection closed by the server" << std::endl;
+                }
+                else if (ec == boost::asio::error::timed_out)
+                {
+                    // Timeout occurred
+                    std::cout << "WebSocket read timeout" << std::endl;
+                }
+                else if (ec == boost::asio::error::connection_reset)
+                {
+                    // Connection reset by peer
+                    std::cout << "Connection reset by peer" << std::endl;
+                }
+                else if (ec == boost::asio::error::eof)
+                {
+                    // End of file reached
+                    std::cout << "End of file reached" << std::endl;
+                }
+                else
+                {
+                    // boost::asio::error::operation_aborted
+                    // Other WebSocket or networking error
+                    std::cout << "WebSocket read error: " << ec.message() << std::endl;
+                }
+                return;
             }
-            return ;
         }
-        }
-        catch (const boost::system::system_error& e) {
+        catch (const boost::system::system_error &e)
+        {
             std::cerr << "Boost system error: " << e.what() << "\n";
             // Handle the error here
-            return ;
+            return;
         }
-        catch (const std::exception& ex)
+        catch (const std::exception &ex)
         {
-            return ;
+            return;
         }
-        
 
         // Print the received message
         std::ostringstream os;
         // copy buffer including NULLS
-        os << beast::make_printable(buffer.data());   
+        os << beast::make_printable(buffer.data());
         std::string output = os.str();
-        
-        #ifdef DEBUG
-        #ifdef DEBUG_MSG        
+
+#ifdef DEBUG
+#ifdef DEBUG_MSG
         std::cout << "Received message: " << buffer.size() << ":" << output << std::endl;
-        #endif
-        #endif
-        
+#endif
+#endif
+
         if (ws_.got_binary() == true)
         {
             m_callback.onBinaryMessageRecieved(output.c_str(), buffer.size());
-           
         }
         else
         {
@@ -145,58 +157,60 @@ void de::andruav_servers::CWSASession::receive_message()
         }
 
         buffer.consume(buffer.size());
-
     }
-    
+
     // NO ERROR HANDLING HERE.
     // SOCKET DISCONNECTION IS DETECTED BY DELAY OR WHEN SENDING DATA
     // Close the WebSocket connection
-    //close(websocket::close_code::normal);
-    //m_callback.onSocketError();
+    // close(websocket::close_code::normal);
+    // m_callback.onSocketError();
 }
-    
-
-
 
 void de::andruav_servers::CWSASession::close(beast::websocket::close_code code)
 {
-    if (!m_connected) return ;
+    if (!m_connected)
+        return;
 
     m_connected = false;
-    
-    beast::error_code ec;
+
+    // beast::error_code ec;
     try
     {
-           
-    if (!ws_.is_open()) 
-    {
-        return ;
-    }
-        
-    ws_.next_layer().next_layer().cancel();
-    ws_.next_layer().next_layer().close();
-    
-    // uncomments blockes when CTRL+C
-    // ws_.close(websocket::close_code::normal, ec);
-    // if (ec) {
-    //     // Handle the error
-    //     std::cerr << "Error closing WebSocket: " << ec.message() << std::endl;
-        
-    //     return ;
-    // }
 
-    } catch (const boost::exception& ex) {
+        if (!ws_.is_open())
+        {
+            return;
+        }
+
+        ws_.next_layer().next_layer().cancel();
+        ws_.next_layer().next_layer().close();
+
+        // uncomments blockes when CTRL+C
+        // ws_.close(websocket::close_code::normal, ec);
+        // if (ec) {
+        //     // Handle the error
+        //     std::cerr << "Error closing WebSocket: " << ec.message() << std::endl;
+
+        //     return ;
+        // }
+    }
+    catch (const boost::exception &ex)
+    {
         // Handle the exception
-        std::cerr << "Caught BOOST_THROW_EXCEPTION: "  << std::endl;
-        return ;
-    } catch (const std::exception& ex) {
+        std::cerr << "Caught BOOST_THROW_EXCEPTION: " << std::endl;
+        return;
+    }
+    catch (const std::exception &ex)
+    {
         // Handle other exceptions derived from std::exception
         std::cerr << "Caught std::exception: " << ex.what() << std::endl;
-        return ;
-    } catch (...) {
+        return;
+    }
+    catch (...)
+    {
         // Handle any other uncaught exceptions
         std::cerr << "Caught unknown exception" << std::endl;
-        return ;
+        return;
     }
 }
 
@@ -205,13 +219,14 @@ void de::andruav_servers::CWSASession::close()
     close(websocket::close_code::normal);
 }
 
-void de::andruav_servers::CWSASession::writeText (const std::string& message)
+void de::andruav_servers::CWSASession::writeText(const std::string &message)
 {
-    
+
     const std::lock_guard<std::mutex> lock(g_i_mutex_writeText);
-    
-    if (!m_connected) return ;
-    
+
+    if (!m_connected)
+        return;
+
     try
     {
         boost::system::error_code ec;
@@ -225,29 +240,36 @@ void de::andruav_servers::CWSASession::writeText (const std::string& message)
             m_callback.onSocketError();
             return;
         }
-    } catch (const boost::exception& ex) {
+    }
+    catch (const boost::exception &ex)
+    {
         // Handle the exception
-        std::cerr << "Caught BOOST_THROW_EXCEPTION: "  << std::endl;
+        std::cerr << "Caught BOOST_THROW_EXCEPTION: " << std::endl;
         m_callback.onSocketError();
-        return ;
-    } catch (const std::exception& ex) {
+        return;
+    }
+    catch (const std::exception &ex)
+    {
         // Handle other exceptions derived from std::exception
         std::cerr << "Caught std::exception: " << ex.what() << std::endl;
         m_callback.onSocketError();
-        return ;
-    } catch (...) {
+        return;
+    }
+    catch (...)
+    {
         // Handle any other uncaught exceptions
         std::cerr << "Caught unknown exception" << std::endl;
         m_callback.onSocketError();
-        return ;
+        return;
     }
 }
 
-void de::andruav_servers::CWSASession::writeBinary (const char * bmsg, const int& length)
+void de::andruav_servers::CWSASession::writeBinary(const char *bmsg, const int &length)
 {
     const std::lock_guard<std::mutex> lock(g_i_mutex_writeText);
-    
-    if (!m_connected) return ;
+
+    if (!m_connected)
+        return;
     try
     {
         boost::system::error_code ec;
@@ -261,41 +283,45 @@ void de::andruav_servers::CWSASession::writeBinary (const char * bmsg, const int
             m_callback.onSocketError();
             return;
         }
-    
-    } catch (const boost::exception& ex) {
+    }
+    catch (const boost::exception &ex)
+    {
         // Handle the exception
-        std::cerr << "Caught BOOST_THROW_EXCEPTION: "  << std::endl;
+        std::cerr << "Caught BOOST_THROW_EXCEPTION: " << std::endl;
         m_callback.onSocketError();
-        return ;
-    } catch (const std::exception& ex) {
+        return;
+    }
+    catch (const std::exception &ex)
+    {
         // Handle other exceptions derived from std::exception
         std::cerr << "Caught std::exception: " << ex.what() << std::endl;
         m_callback.onSocketError();
-        return ;
-    } catch (...) {
+        return;
+    }
+    catch (...)
+    {
         // Handle any other uncaught exceptions
         std::cerr << "Caught unknown exception" << std::endl;
         m_callback.onSocketError();
-        return ;
+        return;
     }
-
 }
 
-void de::andruav_servers::CWSASession::shutdown ()
+void de::andruav_servers::CWSASession::shutdown()
 {
-    //const std::lock_guard<std::mutex> lock(g_i_mutex_writeText);
+    // const std::lock_guard<std::mutex> lock(g_i_mutex_writeText);
     close();
-    
-    if (m_thread_receiver.joinable()) { // suggested by AI
+
+    if (m_thread_receiver.joinable())
+    {                             // suggested by AI
         m_thread_receiver.join(); // Ensure the thread has finished
     }
 }
 
-
-std::unique_ptr<de::andruav_servers::CWSASession> de::andruav_servers::CWSAProxy::run(char const* host, char const* port, char const* url_param, CCallBack_WSASession &callback)
+std::unique_ptr<de::andruav_servers::CWSASession> de::andruav_servers::CWSAProxy::run(char const *host, char const *port, char const *url_param, CCallBack_WSASession &callback)
 {
     // Create a WebSocket client and connect to the server
-    std::unique_ptr<de::andruav_servers::CWSASession> ptr = std::make_unique<de::andruav_servers::CWSASession>(io_context_, std::string(host), std::string(port), std::string(url_param),callback);
+    std::unique_ptr<de::andruav_servers::CWSASession> ptr = std::make_unique<de::andruav_servers::CWSASession>(io_context_, std::string(host), std::string(port), std::string(url_param), callback);
     ptr.get()->run();
     return std::move(ptr);
 }
