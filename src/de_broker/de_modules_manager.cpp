@@ -141,9 +141,11 @@ Json de::comm::CUavosModulesManager::createJSONID (const bool& reSend)
     {
         //https://stackoverflow.com/questions/315948/c-catching-all-exceptions/24142104
         std::exception_ptr p = std::current_exception();
-        std::clog <<(p ? p.__cxa_exception_type()->name() : "null") << std::endl;
+        // std::clog <<(p ? p.__cxa_exception_type()->name() : "null") << std::endl;
+        std::clog <<"error" << std::endl;
         
-        PLOG(plog::error)<<(p ? p.__cxa_exception_type()->name() : "null") ; 
+        // PLOG(plog::error)<<(p ? p.__cxa_exception_type()->name() : "null") ; 
+        PLOG(plog::error)<<"error" ; 
         
         return Json();
     }
