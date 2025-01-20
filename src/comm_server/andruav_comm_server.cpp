@@ -24,7 +24,7 @@
 
 static void *waiter(void *ap)
 {
-    struct args *args = static_cast<args *>(ap);
+    struct args *args = static_cast<struct args *>(ap);
     pthread_join(args->td, args->res);
     pthread_mutex_lock(&args->mtx);
     args->joined = 1;
