@@ -69,8 +69,12 @@ void de::comm::CUDPCommunicator::init (const char * host, int listenningPort, in
 
     
     // pthread initialization
+    int policy;
+    struct sched_param param;
 	m_thread = pthread_self(); // get pthread ID
-	pthread_setschedprio(m_thread, SCHED_FIFO); // setting priority
+	pthread_getschedparam(m_thread, &policy, &param); // getting thread params
+    param.sched_priority = SCHED_FIFO;
+	pthread_setschedparam(m_thread, policy, &param); // getting thread params
 
     std::cout <<__PRETTY_FUNCTION__ << " line:" << __LINE__ << "  "  << _LOG_CONSOLE_TEXT << "DEBUG:1" << _NORMAL_CONSOLE_TEXT_ << std::endl;
 
